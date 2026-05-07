@@ -13,6 +13,35 @@ import datetime
 import cv2
 from app.db import read_violations_by_vehicle
 from email.mime.base import MIMEBase
+import numpy as np
+
+def apply_weather_resilience(frame):
+    """
+    Applies image enhancement techniques to improve visibility in poor weather
+    conditions (rain, fog, low light, glare).
+    """
+    if frame is None:
+        return frame
+        
+    # Convert to LAB color space for lightness enhancement without affecting color hue
+    lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
+    l_channel, a, b = cv2.split(lab)
+    
+    # Apply CLAHE to the L-channel
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    cl = clahe.apply(l_channel)
+    
+    # Merge the CLAHE enhanced L-channel with the original A and B channels
+    merged = cv2.merge((cl, a, b))
+    
+    # Convert back to BGR
+    enhanced_bgr = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+    
+    # Apply Unsharp masking to crisp up edges (useful for blurring from rain/fog)
+    gaussian = cv2.GaussianBlur(enhanced_bgr, (0, 0), 2.0)
+    final_frame = cv2.addWeighted(enhanced_bgr, 1.5, gaussian, -0.5, 0)
+    
+    return final_frame
 
 def _correct_ocr_plate(text):
     """Simple single-plate correction for Indian number plate format.

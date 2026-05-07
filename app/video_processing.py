@@ -212,6 +212,12 @@ def process_frame(img, plate_accumulator):
     Returns:
         Annotated frame for display
     """
+    from app.utils import apply_weather_resilience
+    
+    # Apply weather resilience if enabled in env
+    if os.getenv("ENABLE_WEATHER_RESILIENCE", "true").lower() == "true":
+        img = apply_weather_resilience(img)
+
     clean_img = img.copy()
     new_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = model(new_img, stream=True, device="cpu")

@@ -9,6 +9,9 @@ from ultralytics import YOLO
 import cvzone
 import math
 from image_to_text import predict_number_plate
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+from app.utils import apply_weather_resilience
 
 # ─── Auto-detect GPU/CPU ────────────────────────────────────────────
 USE_GPU = torch.cuda.is_available()
@@ -77,6 +80,9 @@ def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected
 
 def process_frame(img):
     """Processes a single frame for helmet detection and number plate extraction."""
+    if os.getenv("ENABLE_WEATHER_RESILIENCE", "true").lower() == "true":
+        img = apply_weather_resilience(img)
+        
     new_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = model(new_img, stream=True, device=DEVICE_STR)
     li = dict()

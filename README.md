@@ -63,9 +63,10 @@ SENDER_EMAIL=your-email@gmail.com
 SENDER_PASSWORD=your-app-password
 RECEIVER_EMAIL=authority-email@gmail.com
 
-# Thresholds
+# Thresholds & Processing
 CONFIDENCE_THRESHOLD=0.40
 OCR_CONFIDENCE_THRESHOLD=0.30
+ENABLE_WEATHER_RESILIENCE=true
 ```
 
 ---
@@ -98,7 +99,13 @@ py -3.10 "Training _module/scripts/main.py"
 
 The system doesn't just detect objects; it associates them. It only triggers a violation if a `number plate` and a `no helmet` detection both overlap with a detected `rider` bounding box by at least 30%.
 
-### 2. Consensus Voting System
+### 2. Weather-Resilient Pre-Processing
+To maintain high accuracy in adverse weather (rain, fog, low light), the system applies an automatic image enhancement pipeline before YOLO detection:
+- Uses **CLAHE on the LAB color space** to normalize lighting and contrast without color distortion.
+- Applies **Unsharp Masking** to crisp up blurry edges caused by rain or smog.
+- Fully togglable via the `.env` file (`ENABLE_WEATHER_RESILIENCE=true`).
+
+### 3. Consensus Voting System
 
 To combat OCR noise and frame-by-frame variation, the system:
 
