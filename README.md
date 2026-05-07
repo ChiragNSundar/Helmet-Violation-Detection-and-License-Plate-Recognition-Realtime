@@ -87,7 +87,7 @@ Access the system at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 For local testing of the detection logic via CLI:
 
 ```bash
-py -3.10 "Training _module/main.py"
+py -3.10 "Training _module/scripts/main.py"
 ```
 
 ---
@@ -106,6 +106,12 @@ To combat OCR noise and frame-by-frame variation, the system:
 2. Groups similar readings using string-distance heuristics.
 3. Performs **Position-Level Voting** for each character in the plate.
 4. Filters out "ghost" detections seen less than twice or with low confidence.
+
+---
+
+## 🎥 Demo
+
+![Helmet Detection Demo](Training%20_module/docs/bike.gif)
 
 ---
 
