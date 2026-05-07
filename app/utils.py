@@ -110,12 +110,8 @@ def predict_number_plate(img, ocr):
             if len(cleaned_text) > 10:
                 cleaned_text = cleaned_text[:10]
             
-            # Apply OCR error correction based on Indian plate format
-            corrected = _correct_ocr_plate(cleaned_text)
-            if corrected != cleaned_text:
-                print(f"[OCR] Corrected: '{cleaned_text}' -> '{corrected}'")
-            
-            return corrected, avg_score
+            # Return raw cleaned text — correction is done post-voting
+            return cleaned_text, avg_score
         
         return None, None
     

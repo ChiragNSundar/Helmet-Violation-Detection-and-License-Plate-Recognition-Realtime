@@ -112,26 +112,30 @@ def _plate_distance(a, b):
 def _group_and_vote(plate_readings):
     """Group similar plate readings and return the best candidate per group.
     
-    Groups plates that differ by ≤ 2 characters, then picks the most
-    frequent reading in each group (ties broken by highest confidence).
+    Strategy:
+    1. Group plates differing by ≤ 2 characters
+    2. Within each group, prefer readings that are NATURALLY valid
+       (pass Indian plate regex without correction)
+    3. If no naturally-valid readings exist, apply correction to the 
+       most common reading as a fallback
     
     Args:
         plate_readings: list of (plate_text, confidence, frame_img)
     
     Returns:
-        list of (best_plate, best_confidence, best_frame) — one per unique vehicle
+        list of (best_plate, best_confidence, best_frame, sightings)
     """
     if not plate_readings:
         return []
     
-    # Sort by frequency first — most common readings are more likely correct
+    from app.utils import _correct_ocr_plate
+    
     plate_counts = Counter(p[0] for p in plate_readings)
     
-    # Build groups of similar plates
-    groups = []  # list of lists of (plate, conf, img)
+    # Build groups of similar plates (distance ≤ 2)
+    groups = []
     used = set()
     
-    # Process most frequent plates first
     for plate, _count in plate_counts.most_common():
         if plate in used:
             continue
@@ -145,25 +149,46 @@ def _group_and_vote(plate_readings):
         if group:
             groups.append(group)
     
-    # For each group, pick the best candidate
     results = []
     for group in groups:
-        # Count occurrences of each reading in the group
-        reading_counts = Counter(p[0] for p in group)
-        # Find the most common reading
-        best_plate = reading_counts.most_common(1)[0][0]
-        # Get the highest confidence instance of that reading
-        best_conf = max(p[1] for p in group if p[0] == best_plate)
-        best_img = next(p[2] for p in group if p[0] == best_plate and p[1] == best_conf)
-        
-        # Only accept if seen at least 2 times (across all similar readings)
         total_sightings = len(group)
+        reading_counts = Counter(p[0] for p in group)
+        
+        # Step 1: Find naturally-valid readings in this group
+        valid_readings = [
+            (p_text, p_conf, p_img) for p_text, p_conf, p_img in group
+            if is_valid_indian_number_plate(p_text)
+        ]
+        
+        if valid_readings:
+            # Prefer the most common naturally-valid reading
+            valid_counts = Counter(p[0] for p in valid_readings)
+            best_plate = valid_counts.most_common(1)[0][0]
+            best_conf = max(p[1] for p in valid_readings if p[0] == best_plate)
+            best_img = next(p[2] for p in valid_readings if p[0] == best_plate and p[1] == best_conf)
+            source = "natural"
+        else:
+            # Step 2: No naturally-valid readings — try correction on most common
+            most_common_plate = reading_counts.most_common(1)[0][0]
+            corrected = _correct_ocr_plate(most_common_plate)
+            
+            if is_valid_indian_number_plate(corrected):
+                best_plate = corrected
+                best_conf = max(p[1] for p in group if p[0] == most_common_plate)
+                best_img = next(p[2] for p in group if p[0] == most_common_plate and p[1] == best_conf)
+                source = "corrected"
+            else:
+                print(f"[VOTE] Rejected group ({total_sightings} readings) — "
+                      f"no valid plate found, best raw: '{most_common_plate}'")
+                continue
+        
+        # Require minimum sightings and confidence
         if total_sightings >= 2 and best_conf >= 0.40:
             results.append((best_plate, best_conf, best_img, total_sightings))
-            print(f"[VOTE] Plate '{best_plate}' — {total_sightings} sightings, "
-                  f"best conf={best_conf:.2f}, {len(reading_counts)} variants")
+            print(f"[VOTE] ✓ '{best_plate}' ({source}) — {total_sightings} sightings, "
+                  f"conf={best_conf:.2f}, {len(reading_counts)} variants")
         else:
-            print(f"[VOTE] Rejected '{best_plate}' — only {total_sightings} sighting(s), "
+            print(f"[VOTE] Rejected '{best_plate}' — {total_sightings} sighting(s), "
                   f"conf={best_conf:.2f}")
     
     return results
@@ -265,14 +290,13 @@ def process_frame(img, plate_accumulator):
                     
                     try:
                         vehicle_number, ocr_conf = predict_number_plate(crop, ocr)
-                        if vehicle_number and ocr_conf:
+                        if vehicle_number and ocr_conf and len(vehicle_number) == 10:
                             cvzone.putTextRect(img, f"{vehicle_number}", (px1, py1 - 50),
                                                scale=1.5, offset=10, thickness=2,
                                                colorT=(39, 40, 41), colorR=(105, 255, 255))
                             
-                            if is_valid_indian_number_plate(vehicle_number):
-                                # Don't log yet — accumulate for voting
-                                plate_accumulator.append((vehicle_number, ocr_conf, img.copy()))
+                            # Accumulate ALL 10-char readings — voting picks the best later
+                            plate_accumulator.append((vehicle_number, ocr_conf, img.copy()))
                     except Exception as e:
                         pass  # OCR errors are non-critical
                     break
