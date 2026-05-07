@@ -2,7 +2,7 @@ import os
 import json
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
-from app.video_processing import process_video
+from app.video_processing import process_video_web
 from app.db import read_violations_by_vehicle, VIOLATIONS_FILE
 import shutil
 
@@ -20,7 +20,7 @@ async def upload_video(file: UploadFile = File(...)):
     
     try:
         # Process video and detect violations
-        process_video(file_path)
+        process_video_web(file_path)
         return {"message": "Video processed successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
