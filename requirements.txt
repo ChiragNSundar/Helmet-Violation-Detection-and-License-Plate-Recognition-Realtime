@@ -1,13 +1,28 @@
-fastapi>=0.109.0
-uvicorn>=0.27.0
-python-multipart>=0.0.9
-opencv-python>=4.9.0.80
-torch>=2.1.0
-ultralytics>=8.1.2
-paddlepaddle
-paddleocr
-cvzone
-numpy
-python-jose
-email-validator
-aiofiles
+# Core Framework
+fastapi==0.136.1
+uvicorn==0.46.0
+python-multipart==0.0.27
+Jinja2==3.1.6
+starlette==1.0.0
+aiofiles==25.1.0
+
+# Computer Vision & Deep Learning
+torch==2.4.1
+torchvision==0.19.1
+ultralytics==8.4.47
+easyocr==1.7.2
+opencv-python==4.11.0.86
+cvzone==1.6.1
+
+# Optional: Hardware Acceleration (AMD GPU)
+torch-directml==0.2.5.dev240914
+
+# Data & Utilities
+numpy==1.26.4
+pandas==2.3.3
+python-dotenv==1.2.2
+email-validator==2.3.0
+
+# Legacy OCR (if needed)
+paddleocr==2.9.1
+paddlepaddle==3.3.1

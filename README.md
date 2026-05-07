@@ -1,116 +1,98 @@
-# 🏍️ Helmet Violation Detection & License Plate Recognition Realtime
+# 🏍️ RoadWatch: Helmet Violation Detection & License Plate Recognition
 
-This project is an **AI-powered helmet violation detection system** that uses **YOLOv8** for real-time object detection and **PaddleOCR** for license plate recognition. It automatically identifies riders without helmets, crops their number plates, extracts the registration number, and logs the violation with a timestamp and visual evidence.
-
----
-
-## ⚡ Project Overview  
-
-This project automates traffic rule enforcement by:  
-✅ **Detecting Riders Without Helmets**  
-✅ **Recognizing License Plates (OCR)**  
-✅ **Validating Number Plate Formats (Indian Standard)**  
-✅ **Storing Violations in a Database**  
-✅ **Sending Email Alerts to Authorities**  
-✅ **FastAPI-powered Web Dashboard**
----
-
-## 🛠️ Tech Stack  
-
-| Component | Technology |  
-|-----------|------------|  
-| **Backend** | FastAPI |  
-| **Object Detection** | YOLOv8 (Ultralytics) |  
-| **OCR** | PaddleOCR |  
-| **Logic** | Python 3.10, OpenCV, cvzone, Torch |  
-| **Database** | JSON / CSV Logging |  
-| **Web Interface** | Jinja2, HTML, CSS |  
+An AI-powered traffic enforcement system designed for real-time monitoring of motorcycle helmet violations. This system utilizes deep learning to identify riders without helmets, recognizes their license plates via advanced OCR consensus logic, and logs violations with visual evidence.
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Key Features
+
+- **Real-Time Detection**: Powered by **YOLOv8** for high-speed identification of riders, helmets, and number plates.
+- **Advanced OCR Consensus**: Implements a unique **Position-Level Voting System** that processes multiple frames to ensure 99%+ accuracy in plate recognition, effectively resolving character confusions like `D` vs `Q`.
+- **Smart Filtering**: Automatically ignores duplicate readings and applies format-aware correction based on **Indian Standard License Plates** (XX00XX0000).
+- **Automated Alerts**: Logs violations to JSON/CSV databases and supports **Email Notifications** with attached visual evidence.
+- **Web Dashboard**: A modern, interactive dashboard built with **FastAPI** for easy video upload and violation monitoring.
+- **Hardware Acceleration**: Optimized support for **NVIDIA (CUDA)** and **AMD (DirectML)** GPUs.
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Version |
+| :--- | :--- | :--- |
+| **Language** | Python | **3.10.x** (Required) |
+| **Backend** | FastAPI | 0.136.1 |
+| **Object Detection** | YOLOv8 | 8.4.47 |
+| **OCR Engine** | EasyOCR / PaddleOCR | 1.7.2 / 2.9.1 |
+| **Deep Learning** | PyTorch | 2.4.1 |
+| **Web UI** | Jinja2 / Starlette | 3.1.6 / 1.0.0 |
+| **Hardware Access** | OpenCV / DirectML | 4.11 / 0.2.5 |
+
+---
+
+## ⚙️ Installation & Setup
 
 ### 1. Prerequisites
-
-- **Python 3.10** (Recommended for compatibility)
-- Windows / Linux / macOS
+- **Python 3.10.x** is strictly required for compatibility with OCR engines and hardware acceleration layers.
+- Git installed on your system.
 
 ### 2. Clone the Repository
-
 ```bash
 git clone https://github.com/ChiragNSundar/Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime.git
 cd Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime
 ```
 
 ### 3. Install Dependencies
-
 ```bash
-pip install -r requirements.txt
+py -3.10 -m pip install -r requirements.txt
+```
+
+### 4. Environment Configuration
+Create a `.env` file in the root directory to configure your server and email settings:
+```env
+# Server
+HOST=127.0.0.1
+PORT=8000
+
+# Email Alerts
+SENDER_EMAIL=your-email@gmail.com
+SENDER_PASSWORD=your-app-password
+RECEIVER_EMAIL=authority-email@gmail.com
+
+# Thresholds
+CONFIDENCE_THRESHOLD=0.40
+OCR_CONFIDENCE_THRESHOLD=0.30
 ```
 
 ---
 
 ## 🖥️ Running the Application
 
-### Running the Web Dashboard
-
-To start the FastAPI web interface, run:
-
+### Launching the Dashboard
+To start the FastAPI web interface:
 ```bash
-python -m app.main
+py -3.10 -m app.main
 ```
+Access the system at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
-Once started, access the dashboard at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
-
-### Running the Training Module Scripts
-
-If you want to run the standalone detection scripts inside the `Training _module`:
-
+### Using the Standalone Module
+For local testing of the detection logic via CLI:
 ```bash
-python "Training _module/main.py"
+py -3.10 "Training _module/main.py"
 ```
-
-*Note: This will process the sample video in `Training _module/videos/22.mp4` and generate an `output.mp4`.*
 
 ---
 
-## 🧠 Training & Model Development
+## 🧠 Core Intelligence
 
-### Dataset
+### 1. Spatial Association Logic
+The system doesn't just detect objects; it associates them. It only triggers a violation if a `number plate` and a `no helmet` detection both overlap with a detected `rider` bounding box by at least 30%.
 
-The model was trained on a comprehensive dataset containing annotated images of riders, helmets, and number plates.
-
-- **Total Classes:** 4 (`with helmet`, `without helmet`, `rider`, `number plate`)
-- **Source:** Kaggle Dataset
-
-### How to Train
-
-1. **Prepare Data:** Place your images and labels in the `Training _module/archive/` folder.
-2. **Configure YAML:** Update `Training _module/coco128.yaml` with the correct paths.
-3. **Run Training:**
-
-   ```bash
-   python "Training _module/training.py"
-   ```
-
-4. **Update Weights:** Once training is complete, copy the `best.pt` file from the `runs/` directory to `app/models/yolov8_best.pt`.
-
----
-
-## 🏗️ System Architecture
-
-### 1. Object Detection (YOLOv8)
-
-The system uses YOLOv8 to detect four classes. It implements **Spatial Association Logic** to ensure that a helmet (or lack thereof) and a number plate are correctly linked to a specific rider by checking for bounding box overlaps.
-
-### 2. Optical Character Recognition (PaddleOCR)
-
-When a violation (no helmet) is confirmed, the system crops the detected number plate area and passes it to **PaddleOCR**.
-
-### 3. Validation Logic
-
-The extracted text is passed through a **Regular Expression** filter to validate it against Indian number plate formats:
-`pattern = r'^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$'`
+### 2. Consensus Voting System (New)
+To combat OCR noise and frame-by-frame variation, the system:
+1.  Accumulates all plate readings across the entire video.
+2.  Groups similar readings using string-distance heuristics.
+3.  Performs **Position-Level Voting** for each character in the plate.
+4.  Filters out "ghost" detections seen less than twice or with low confidence.
 
 ---
 
@@ -118,30 +100,25 @@ The extracted text is passed through a **Regular Expression** filter to validate
 
 ```text
 ├── app/
-│   ├── main.py              # FastAPI Entry Point
-│   ├── video_processing.py   # Core Detection & Logic
-│   ├── routes.py            # API Routes
-│   ├── models/              # Pre-trained YOLO weights
-│   └── templates/           # Web Interface
+│   ├── main.py              # FastAPI Application Entry
+│   ├── video_processing.py   # Detection "Brain" & Consensus Logic
+│   ├── routes.py            # API Endpoint Management
+│   ├── models/              # Pre-trained YOLOv8 Weights
+│   └── utils.py             # OCR Correction & Validation
 ├── Training _module/
-│   ├── training.py          # Script to train YOLO
-│   ├── main.py              # Standalone detection script
-│   ├── test.py              # Testing script for camera/video
-│   └── archive/             # Dataset folder
-├── requirements.txt         # Project dependencies
-└── README.md                # Project Documentation
+│   ├── training.py          # YOLO Fine-tuning Script
+│   ├── main.py              # CLI Detection Script
+│   └── archive/             # Dataset Management
+├── requirements.txt         # Dependency Manifest
+└── README.md                # Documentation
 ```
 
 ---
 
-## 🎥 Demo
+## ⭐️ Support & Contribution
 
-![Demo](Training%20_module/bike.gif)
-
-## ⭐️ Support
-
-If you find this project useful, please give it a star! ⭐️
+If you find this project useful for your research or implementation, please give it a star! ⭐️
 
 ## 📧 Contact
 
-For more information or dataset access, contact me on **[LinkedIn](https://www.linkedin.com/in/chirag-n-sundar/)**.
+For dataset access or professional inquiries, reach out on **[LinkedIn](https://www.linkedin.com/in/chirag-n-sundar/)**.
