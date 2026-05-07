@@ -1,3 +1,5 @@
+# Realtime-version
+
 import cv2
 import os
 import torch
@@ -9,9 +11,6 @@ from ultralytics import YOLO
 import cvzone
 import math
 from image_to_text import predict_number_plate
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
-from app.utils import apply_weather_resilience
 
 # ─── Auto-detect GPU/CPU ────────────────────────────────────────────
 USE_GPU = torch.cuda.is_available()
@@ -23,7 +22,7 @@ classNames = ["with helmet", "without helmet", "rider", "number plate"]
 ocr = easyocr.Reader(['en'], gpu=USE_GPU)  # Initialize EasyOCR
 
 # YOLO Model
-model = YOLO(os.path.join(os.path.dirname(__file__), "../runs/detect/train7/weights/best.pt"))  # Replace with the actual path to the YOLO model
+model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt"))  # Replace with the actual path to the YOLO model
 
 # Helper Functions
 def is_valid_indian_number_plate(number_plate):
@@ -33,7 +32,7 @@ def is_valid_indian_number_plate(number_plate):
 
 
 def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected,
-                                   csv_file_path=os.path.join(os.path.dirname(__file__), '../results/number_plates.csv')):
+                                   csv_file_path=os.path.join(os.path.dirname(__file__), 'number_plates.csv')):
     """Extracts and stores valid number plate details."""
     print(
         f"Debug: Received values - Vehicle Number: {vehicle_number}, Confidence: {conf}, Without Helmet: {without_helmet_detected}")
@@ -80,9 +79,6 @@ def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected
 
 def process_frame(img):
     """Processes a single frame for helmet detection and number plate extraction."""
-    if os.getenv("ENABLE_WEATHER_RESILIENCE", "true").lower() == "true":
-        img = apply_weather_resilience(img)
-        
     new_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = model(new_img, stream=True, device=DEVICE_STR)
     li = dict()
@@ -191,7 +187,7 @@ if __name__ == "__main__":
     if choice == '1':
         detect_realtime_camera()
     elif choice == '2':
-        video_path = os.path.join(os.path.dirname(__file__), "../videos/22.mp4")
+        video_path = os.path.join(os.path.dirname(__file__), "videos/22.mp4")
         detect_from_video(video_path)
     else:
         print("Invalid input. Exiting program.")
