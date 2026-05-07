@@ -1,6 +1,0 @@
-train: /Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/archive/train/images
-val: /Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/archive/val/images
-
-nc: 4
-
-names: ["with helmet", "without helmet", "rider", "number plate"]
