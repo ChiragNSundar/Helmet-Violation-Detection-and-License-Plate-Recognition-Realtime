@@ -1,6 +1,11 @@
 import re
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 import smtplib
+from collections import Counter
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email import encoders
@@ -10,18 +15,15 @@ from app.db import read_violations_by_vehicle
 from email.mime.base import MIMEBase
 
 def _correct_ocr_plate(text):
-    """Apply OCR error correction for Indian number plate format.
+    """Simple single-plate correction for Indian number plate format.
     
     Indian format: XX00XX0000 (2 letters, 2 digits, 2 letters, 4 digits)
-    Common OCR confusions: 0↔O↔Q, 1↔I↔L, 5↔S, 8↔B, 4↔A
+    Only fixes digit-in-letter-position and letter-in-digit-position.
     """
     if len(text) != 10:
         return text
     
-    # Position rules: L=letter expected, D=digit expected
     pattern = "LLDDLLDDDD"
-    
-    # Character correction maps
     to_letter = {'0': 'O', '1': 'I', '2': 'Z', '4': 'A', '5': 'S', '6': 'G', '8': 'B'}
     to_digit = {'O': '0', 'Q': '0', 'I': '1', 'L': '1', 'Z': '2', 'S': '5', 'G': '6', 'B': '8', 'A': '4', 'D': '0'}
     
@@ -33,6 +35,51 @@ def _correct_ocr_plate(text):
             corrected[i] = to_digit.get(char.upper(), char)
     
     return ''.join(corrected)
+
+
+def _vote_plate_from_group(plate_strings):
+    """Build a consensus plate by voting on each character position.
+    
+    For each of the 10 positions, count which character appears most
+    across all readings, respecting the Indian format constraint
+    (positions 0-1 and 4-5 must be letters, 2-3 and 6-9 must be digits).
+    
+    Returns the consensus plate string.
+    """
+    if not plate_strings:
+        return None
+    
+    pattern = "LLDDLLDDDD"
+    # Indian plates typically avoid 'I' and 'O' to prevent confusion with '1' and '0'.
+    # '0' in a letter position is most likely 'Q', 'D', or 'G'.
+    to_letter = {'0': 'Q', '1': 'L', '2': 'Z', '4': 'A', '5': 'S', '6': 'G', '8': 'B'}
+    to_digit = {'O': '0', 'Q': '0', 'I': '1', 'L': '1', 'Z': '2', 'S': '5', 'G': '6', 'B': '8', 'A': '4', 'D': '0'}
+    
+    result = []
+    for pos in range(10):
+        # Count characters at this position across all readings
+        char_counts = Counter(p[pos] for p in plate_strings if len(p) == 10)
+        if not char_counts:
+            return None
+        
+        expected = pattern[pos]
+        
+        # Normalize: convert characters to the expected type for counting
+        normalized_counts = Counter()
+        for char, count in char_counts.items():
+            if expected == 'L' and char.isdigit():
+                norm = to_letter.get(char, char)
+            elif expected == 'D' and char.isalpha():
+                norm = to_digit.get(char, char)
+            else:
+                norm = char
+            normalized_counts[norm] += count
+        
+        # Pick the most common (normalized) character
+        best_char = normalized_counts.most_common(1)[0][0]
+        result.append(best_char)
+    
+    return ''.join(result)
 
 
 def is_valid_indian_number_plate(vehicle_number):
@@ -104,8 +151,11 @@ def predict_number_plate(img, ocr):
         
         print(f"[OCR] Raw: '{combined_text}' -> Cleaned: '{cleaned_text}' (len={len(cleaned_text)}, conf={avg_score:.2f})")
         
+        # Get OCR confidence threshold from env
+        ocr_thresh = float(os.getenv("OCR_CONFIDENCE_THRESHOLD", 0.30))
+        
         # Indian plates are 10 chars, but allow some flexibility (9-11)
-        if avg_score >= 0.3 and 9 <= len(cleaned_text) <= 11:
+        if avg_score >= ocr_thresh and 9 <= len(cleaned_text) <= 11:
             # Try to extract exactly 10 chars if possible
             if len(cleaned_text) > 10:
                 cleaned_text = cleaned_text[:10]
@@ -122,12 +172,19 @@ def predict_number_plate(img, ocr):
 
 def send_violation_email(vehicle_number, violation_image):
     """Send email notification for helmet violation."""
-    sender_email = "sender-email"
-    sender_password = ""  # Use App Password for Gmail
+    sender_email = os.getenv("SENDER_EMAIL", "sender-email")
+    sender_password = os.getenv("SENDER_PASSWORD", "")
+    receiver_email = os.getenv("RECEIVER_EMAIL", "receiver-email")
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
     
+    if not sender_email or not sender_password:
+        print("[EMAIL] Credentials not set in .env, skipping email notification.")
+        return
+
     msg = MIMEMultipart()
     msg['From'] = sender_email
-    msg['To'] = "receiver-email"
+    msg['To'] = receiver_email
     msg['Subject'] = "Helmet Violation Detected"
     
     body = f"""
@@ -152,11 +209,11 @@ def send_violation_email(vehicle_number, violation_image):
         return
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
-        print("Violation email sent successfully")
+        print(f"[EMAIL] Violation email sent successfully to {receiver_email}")
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"[EMAIL] Error sending email: {e}")

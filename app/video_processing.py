@@ -2,6 +2,10 @@ import cv2
 import os
 import csv
 import torch
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 from datetime import datetime
 from collections import Counter
 import easyocr
@@ -141,54 +145,55 @@ def _group_and_vote(plate_readings):
             continue
         
         group = []
-        for p_text, p_conf, p_img in plate_readings:
-            if p_text not in used and _plate_distance(plate, p_text) <= 2:
-                group.append((p_text, p_conf, p_img))
-                used.add(p_text)
+        # Find all plate readings that are similar to this leader
+        for reading in plate_readings:
+            p_text, p_conf, p_img = reading
+            if _plate_distance(plate, p_text) <= 2:
+                group.append(reading)
         
         if group:
             groups.append(group)
+            # Mark all unique strings in this group as used so they don't start new groups
+            for p_text, p_conf, p_img in group:
+                used.add(p_text)
     
     results = []
     for group in groups:
         total_sightings = len(group)
         reading_counts = Counter(p[0] for p in group)
+        all_plate_strings = [p[0] for p in group]
         
-        # Step 1: Find naturally-valid readings in this group
-        valid_readings = [
-            (p_text, p_conf, p_img) for p_text, p_conf, p_img in group
-            if is_valid_indian_number_plate(p_text)
-        ]
+        # Use position-level voting across ALL readings in the group
+        # This is more accurate than picking the most common whole string
+        # because it resolves per-character confusion (D↔Q, O↔0, etc.)
+        from app.utils import _vote_plate_from_group
+        consensus_plate = _vote_plate_from_group(all_plate_strings)
         
-        if valid_readings:
-            # Prefer the most common naturally-valid reading
-            valid_counts = Counter(p[0] for p in valid_readings)
-            best_plate = valid_counts.most_common(1)[0][0]
-            best_conf = max(p[1] for p in valid_readings if p[0] == best_plate)
-            best_img = next(p[2] for p in valid_readings if p[0] == best_plate and p[1] == best_conf)
-            source = "natural"
-        else:
-            # Step 2: No naturally-valid readings — try correction on most common
-            most_common_plate = reading_counts.most_common(1)[0][0]
-            corrected = _correct_ocr_plate(most_common_plate)
-            
-            if is_valid_indian_number_plate(corrected):
-                best_plate = corrected
-                best_conf = max(p[1] for p in group if p[0] == most_common_plate)
-                best_img = next(p[2] for p in group if p[0] == most_common_plate and p[1] == best_conf)
-                source = "corrected"
+        if not consensus_plate or not is_valid_indian_number_plate(consensus_plate):
+            # Fallback: try the most common naturally-valid reading
+            valid_readings = [
+                (p_text, p_conf) for p_text, p_conf, p_img in group
+                if is_valid_indian_number_plate(p_text)
+            ]
+            if valid_readings:
+                valid_counts = Counter(p[0] for p in valid_readings)
+                consensus_plate = valid_counts.most_common(1)[0][0]
             else:
                 print(f"[VOTE] Rejected group ({total_sightings} readings) — "
-                      f"no valid plate found, best raw: '{most_common_plate}'")
+                      f"no valid plate, variants: {list(reading_counts.keys())[:5]}")
                 continue
         
+        best_conf = max(p[1] for p in group)
+        best_img = next(p[2] for p in group if p[1] == best_conf)
+        
         # Require minimum sightings and confidence
-        if total_sightings >= 2 and best_conf >= 0.40:
-            results.append((best_plate, best_conf, best_img, total_sightings))
-            print(f"[VOTE] ✓ '{best_plate}' ({source}) — {total_sightings} sightings, "
+        conf_thresh = float(os.getenv("CONFIDENCE_THRESHOLD", 0.40))
+        if total_sightings >= 2 and best_conf >= conf_thresh:
+            results.append((consensus_plate, best_conf, best_img, total_sightings))
+            print(f"[VOTE] ✓ '{consensus_plate}' — {total_sightings} sightings, "
                   f"conf={best_conf:.2f}, {len(reading_counts)} variants")
         else:
-            print(f"[VOTE] Rejected '{best_plate}' — {total_sightings} sighting(s), "
+            print(f"[VOTE] Rejected '{consensus_plate}' — {total_sightings} sighting(s), "
                   f"conf={best_conf:.2f}")
     
     return results

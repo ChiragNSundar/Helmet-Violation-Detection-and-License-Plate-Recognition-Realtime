@@ -1,0 +1,48 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+**/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Local data / Logs
+uploads/
+violation_images/
+**/*/violation_images/
+number_plates.csv
+violations.json
+**/*/violations.json
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Large media files
+*.mp4
+*.avi
+*.mkv

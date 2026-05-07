@@ -1,5 +1,9 @@
 import os
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -29,4 +33,6 @@ async def read_violations(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host=host, port=port)
