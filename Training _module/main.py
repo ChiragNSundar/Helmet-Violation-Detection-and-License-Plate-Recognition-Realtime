@@ -5,18 +5,20 @@ import os
 import cvzone
 import torch
 from image_to_text import predict_number_plate
-from transformers import VisionEncoderDecoderModel
-from transformers import TrOCRProcessor
-from paddleocr import PaddleOCR
+import easyocr
 import csv
 from datetime import datetime
 import re
 
+# ─── Auto-detect GPU/CPU ────────────────────────────────────────────
+USE_GPU = torch.cuda.is_available()
+DEVICE_STR = "cuda" if USE_GPU else "cpu"
+device = torch.device(DEVICE_STR)
+print(f"[INIT] Using device: {DEVICE_STR} (CUDA available: {USE_GPU})")
+
 cap = cv2.VideoCapture(os.path.join(os.path.dirname(__file__), "videos/22.mp4"))  # For videos
 
 model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt")) # after training update the location of best.pt
-
-device = torch.device("cpu") # change to cuda for windows gpu or keep it as cpu
 
 classNames = ["with helmet", "without helmet", "rider", "number plate"]
 num = 0
@@ -31,8 +33,8 @@ fps = int(cap.get(cv2.CAP_PROP_FPS))
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 output = cv2.VideoWriter('output.mp4', fourcc, fps, (frame_width, frame_height))
 
-
-ocr = PaddleOCR(use_angle_cls=True, lang='en')  # need to run only once to download and load model into memory
+# Initialize EasyOCR (PaddleOCR has OneDNN crash on Windows)
+ocr = easyocr.Reader(['en'], gpu=USE_GPU)
 
 
 def is_valid_indian_number_plate(number_plate):
@@ -79,7 +81,7 @@ while True:
     if not success:
         break
     new_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    results = model(new_img, stream=True, device="mps")
+    results = model(new_img, stream=True, device=DEVICE_STR)
     for r in results:
         boxes = r.boxes
         li = dict()

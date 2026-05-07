@@ -3,14 +3,20 @@ import csv
 import json
 from datetime import datetime, date
 
-VIOLATIONS_FILE = "violations.json"
+# Use absolute path relative to project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VIOLATIONS_FILE = os.path.join(PROJECT_ROOT, "violations.json")
 
 def ensure_violations_file_exists():
-    if not os.path.exists(VIOLATIONS_FILE):
+    """Ensure violations.json exists and contains valid JSON."""
+    if not os.path.exists(VIOLATIONS_FILE) or os.path.getsize(VIOLATIONS_FILE) == 0:
         with open(VIOLATIONS_FILE, 'w') as file:
             json.dump([], file)
+        print(f"[DB] Initialized {VIOLATIONS_FILE}")
+
 
 def log_violation(vehicle_number, violation_type, violation_image_path):
+    """Log a violation to violations.json. Returns the violation dict if new, None if duplicate."""
     ensure_violations_file_exists()
     
     # Read existing violations
@@ -18,6 +24,7 @@ def log_violation(vehicle_number, violation_type, violation_image_path):
         try:
             violations = json.load(file)
         except json.JSONDecodeError:
+            print(f"[DB] WARNING: violations.json was corrupted, resetting.")
             violations = []
     
     # Check for existing violation today
@@ -41,9 +48,12 @@ def log_violation(vehicle_number, violation_type, violation_image_path):
         with open(VIOLATIONS_FILE, 'w') as file:
             json.dump(violations, file, indent=2)
         
+        print(f"[DB] Violation saved to {VIOLATIONS_FILE}: {vehicle_number}")
         return violation
     
+    print(f"[DB] Duplicate for today, not saving: {vehicle_number}")
     return None
+
 
 def read_violations_by_vehicle(vehicle_number):
     ensure_violations_file_exists()

@@ -4,16 +4,20 @@ import torch
 from datetime import datetime
 import csv
 import re
-from paddleocr import PaddleOCR
+import easyocr
 from ultralytics import YOLO
 import cvzone
 import math
 from image_to_text import predict_number_plate
 
-# Constants and Global Variables
-device = torch.device("cpu")  # Change to "cuda" for GPU support
+# ─── Auto-detect GPU/CPU ────────────────────────────────────────────
+USE_GPU = torch.cuda.is_available()
+DEVICE_STR = "cuda" if USE_GPU else "cpu"
+device = torch.device(DEVICE_STR)
+print(f"[INIT] Using device: {DEVICE_STR} (CUDA available: {USE_GPU})")
+
 classNames = ["with helmet", "without helmet", "rider", "number plate"]
-ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Initialize OCR
+ocr = easyocr.Reader(['en'], gpu=USE_GPU)  # Initialize EasyOCR
 
 # YOLO Model
 model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt"))  # Replace with the actual path to the YOLO model
@@ -74,7 +78,7 @@ def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected
 def process_frame(img):
     """Processes a single frame for helmet detection and number plate extraction."""
     new_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    results = model(new_img, stream=True, device="mps")
+    results = model(new_img, stream=True, device=DEVICE_STR)
     li = dict()
     rider_box = []
 
