@@ -1,4 +1,5 @@
 import cv2
+import os
 import torch
 from datetime import datetime
 import csv
@@ -15,7 +16,7 @@ classNames = ["with helmet", "without helmet", "rider", "number plate"]
 ocr = PaddleOCR(use_angle_cls=True, lang='en')  # Initialize OCR
 
 # YOLO Model
-model = YOLO("/Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/runs/detect/train7/weights/best.pt")  # Replace with the actual path to the YOLO model
+model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt"))  # Replace with the actual path to the YOLO model
 
 # Helper Functions
 def is_valid_indian_number_plate(number_plate):
@@ -25,7 +26,7 @@ def is_valid_indian_number_plate(number_plate):
 
 
 def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected,
-                                   csv_file_path='/Users/chiragnsundar/Documents/GitHub/FinalYearProject/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/number_plates.csv'):
+                                   csv_file_path=os.path.join(os.path.dirname(__file__), 'number_plates.csv')):
     """Extracts and stores valid number plate details."""
     print(
         f"Debug: Received values - Vehicle Number: {vehicle_number}, Confidence: {conf}, Without Helmet: {without_helmet_detected}")
@@ -180,7 +181,7 @@ if __name__ == "__main__":
     if choice == '1':
         detect_realtime_camera()
     elif choice == '2':
-        video_path = "/Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/videos/22.mp4"
+        video_path = os.path.join(os.path.dirname(__file__), "videos/22.mp4")
         detect_from_video(video_path)
     else:
         print("Invalid input. Exiting program.")

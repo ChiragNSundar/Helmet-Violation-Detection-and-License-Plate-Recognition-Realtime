@@ -12,9 +12,9 @@ import csv
 from datetime import datetime
 import re
 
-cap = cv2.VideoCapture("/Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/videos/22.mp4")  # For videos
+cap = cv2.VideoCapture(os.path.join(os.path.dirname(__file__), "videos/22.mp4"))  # For videos
 
-model = YOLO("/Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/runs/detect/train7/weights/best.pt") # after training update the location of best.pt
+model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt")) # after training update the location of best.pt
 
 device = torch.device("cpu") # change to cuda for windows gpu or keep it as cpu
 

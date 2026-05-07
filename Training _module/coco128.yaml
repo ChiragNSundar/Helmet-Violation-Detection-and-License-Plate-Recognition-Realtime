@@ -1,5 +1,5 @@
-train: /Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/archive/train/images
-val: /Users/chiragnsundar/Documents/Real-Time-Detection-of-Helmet-Violations-and-Capturing-Bike-Numbers-from-Number-Plates-main/archive/val/images
+train: ./archive/train/images
+val: ./archive/val/images
 
 nc: 4
 
