@@ -5,16 +5,18 @@ This project is an **AI-powered helmet violation detection system** that uses **
 ---
 
 ## ⚡ Project Overview  
+
 This project automates traffic rule enforcement by:  
 ✅ **Detecting Riders Without Helmets**  
 ✅ **Recognizing License Plates (OCR)**  
 ✅ **Validating Number Plate Formats (Indian Standard)**  
 ✅ **Storing Violations in a Database**  
-✅ **FastAPI-powered Web Dashboard**  
-
+✅ **Sending Email Alerts to Authorities**  
+✅ **FastAPI-powered Web Dashboard**
 ---
 
 ## 🛠️ Tech Stack  
+
 | Component | Technology |  
 |-----------|------------|  
 | **Backend** | FastAPI |  
@@ -29,16 +31,19 @@ This project automates traffic rule enforcement by:
 ## 🚀 Installation & Setup
 
 ### 1. Prerequisites
+
 - **Python 3.10** (Recommended for compatibility)
 - Windows / Linux / macOS
 
 ### 2. Clone the Repository
+
 ```bash
 git clone https://github.com/ChiragNSundar/Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime.git
 cd Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -48,17 +53,23 @@ pip install -r requirements.txt
 ## 🖥️ Running the Application
 
 ### Running the Web Dashboard
+
 To start the FastAPI web interface, run:
+
 ```bash
 python -m app.main
 ```
+
 Once started, access the dashboard at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 ### Running the Training Module Scripts
+
 If you want to run the standalone detection scripts inside the `Training _module`:
+
 ```bash
 python "Training _module/main.py"
 ```
+
 *Note: This will process the sample video in `Training _module/videos/22.mp4` and generate an `output.mp4`.*
 
 ---
@@ -66,17 +77,22 @@ python "Training _module/main.py"
 ## 🧠 Training & Model Development
 
 ### Dataset
+
 The model was trained on a comprehensive dataset containing annotated images of riders, helmets, and number plates.
+
 - **Total Classes:** 4 (`with helmet`, `without helmet`, `rider`, `number plate`)
-- **Source:** [Kaggle Dataset](https://www.kaggle.com/datasets/aneesarom/rider-with-helmet-without-helmet-number-plate/data)
+- **Source:** Kaggle Dataset
 
 ### How to Train
+
 1. **Prepare Data:** Place your images and labels in the `Training _module/archive/` folder.
 2. **Configure YAML:** Update `Training _module/coco128.yaml` with the correct paths.
 3. **Run Training:**
+
    ```bash
    python "Training _module/training.py"
    ```
+
 4. **Update Weights:** Once training is complete, copy the `best.pt` file from the `runs/` directory to `app/models/yolov8_best.pt`.
 
 ---
@@ -84,18 +100,22 @@ The model was trained on a comprehensive dataset containing annotated images of 
 ## 🏗️ System Architecture
 
 ### 1. Object Detection (YOLOv8)
+
 The system uses YOLOv8 to detect four classes. It implements **Spatial Association Logic** to ensure that a helmet (or lack thereof) and a number plate are correctly linked to a specific rider by checking for bounding box overlaps.
 
 ### 2. Optical Character Recognition (PaddleOCR)
+
 When a violation (no helmet) is confirmed, the system crops the detected number plate area and passes it to **PaddleOCR**.
 
 ### 3. Validation Logic
+
 The extracted text is passed through a **Regular Expression** filter to validate it against Indian number plate formats:
 `pattern = r'^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$'`
 
 ---
 
 ## 📂 Project Structure
+
 ```text
 ├── app/
 │   ├── main.py              # FastAPI Entry Point
@@ -115,10 +135,13 @@ The extracted text is passed through a **Regular Expression** filter to validate
 ---
 
 ## 🎥 Demo
+
 ![Demo](Training%20_module/bike.gif)
 
 ## ⭐️ Support
+
 If you find this project useful, please give it a star! ⭐️
 
 ## 📧 Contact
+
 For more information or dataset access, contact me on **[LinkedIn](https://www.linkedin.com/in/chirag-n-sundar/)**.
