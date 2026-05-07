@@ -16,9 +16,9 @@ DEVICE_STR = "cuda" if USE_GPU else "cpu"
 device = torch.device(DEVICE_STR)
 print(f"[INIT] Using device: {DEVICE_STR} (CUDA available: {USE_GPU})")
 
-cap = cv2.VideoCapture(os.path.join(os.path.dirname(__file__), "videos/22.mp4"))  # For videos
+cap = cv2.VideoCapture(os.path.join(os.path.dirname(__file__), "../videos/22.mp4"))  # For videos
 
-model = YOLO(os.path.join(os.path.dirname(__file__), "runs/detect/train7/weights/best.pt")) # after training update the location of best.pt
+model = YOLO(os.path.join(os.path.dirname(__file__), "../runs/detect/train7/weights/best.pt")) # after training update the location of best.pt
 
 classNames = ["with helmet", "without helmet", "rider", "number plate"]
 num = 0
@@ -31,7 +31,7 @@ fps = int(cap.get(cv2.CAP_PROP_FPS))
 
 # initialize the FourCC and a video writer object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-output = cv2.VideoWriter('output.mp4', fourcc, fps, (frame_width, frame_height))
+output = cv2.VideoWriter(os.path.join(os.path.dirname(__file__), '../results/output.mp4'), fourcc, fps, (frame_width, frame_height))
 
 # Initialize EasyOCR (PaddleOCR has OneDNN crash on Windows)
 ocr = easyocr.Reader(['en'], gpu=USE_GPU)
@@ -44,7 +44,8 @@ def is_valid_indian_number_plate(number_plate):
     return re.match(pattern, number_plate) is not None
 
 
-def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected, csv_file_path='number_plates.csv'):
+def extract_and_store_number_plate(vehicle_number, conf, without_helmet_detected, 
+                                   csv_file_path=os.path.join(os.path.dirname(__file__), '../results/number_plates.csv')):
     # Check if the number plate is valid, in Indian format, and a person without helmet is detected
     if vehicle_number and conf and without_helmet_detected and is_valid_indian_number_plate(vehicle_number):
         # Read existing entries to check for duplicates

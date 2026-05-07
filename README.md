@@ -1,4 +1,4 @@
-# 🏍️ RoadWatch: Helmet Violation Detection & License Plate Recognition
+# 🏍️ RoadWatch: Helmet Violation Detection & License Plate Recognition Realtime
 
 An AI-powered traffic enforcement system designed for real-time monitoring of motorcycle helmet violations. This system utilizes deep learning to identify riders without helmets, recognizes their license plates via advanced OCR consensus logic, and logs violations with visual evidence.
 
@@ -32,22 +32,27 @@ An AI-powered traffic enforcement system designed for real-time monitoring of mo
 ## ⚙️ Installation & Setup
 
 ### 1. Prerequisites
+
 - **Python 3.10.x** is strictly required for compatibility with OCR engines and hardware acceleration layers.
 - Git installed on your system.
 
 ### 2. Clone the Repository
+
 ```bash
 git clone https://github.com/ChiragNSundar/Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime.git
 cd Helmet-Violation-Detection-and-License-Plate-Recognition-Realtime
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 py -3.10 -m pip install -r requirements.txt
 ```
 
 ### 4. Environment Configuration
+
 Create a `.env` file in the root directory to configure your server and email settings:
+
 ```env
 # Server
 HOST=127.0.0.1
@@ -68,14 +73,19 @@ OCR_CONFIDENCE_THRESHOLD=0.30
 ## 🖥️ Running the Application
 
 ### Launching the Dashboard
+
 To start the FastAPI web interface:
+
 ```bash
 py -3.10 -m app.main
 ```
+
 Access the system at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 ### Using the Standalone Module
+
 For local testing of the detection logic via CLI:
+
 ```bash
 py -3.10 "Training _module/main.py"
 ```
@@ -85,14 +95,17 @@ py -3.10 "Training _module/main.py"
 ## 🧠 Core Intelligence
 
 ### 1. Spatial Association Logic
+
 The system doesn't just detect objects; it associates them. It only triggers a violation if a `number plate` and a `no helmet` detection both overlap with a detected `rider` bounding box by at least 30%.
 
-### 2. Consensus Voting System (New)
+### 2. Consensus Voting System
+
 To combat OCR noise and frame-by-frame variation, the system:
-1.  Accumulates all plate readings across the entire video.
-2.  Groups similar readings using string-distance heuristics.
-3.  Performs **Position-Level Voting** for each character in the plate.
-4.  Filters out "ghost" detections seen less than twice or with low confidence.
+
+1. Accumulates all plate readings across the entire video.
+2. Groups similar readings using string-distance heuristics.
+3. Performs **Position-Level Voting** for each character in the plate.
+4. Filters out "ghost" detections seen less than twice or with low confidence.
 
 ---
 
@@ -106,9 +119,12 @@ To combat OCR noise and frame-by-frame variation, the system:
 │   ├── models/              # Pre-trained YOLOv8 Weights
 │   └── utils.py             # OCR Correction & Validation
 ├── Training _module/
-│   ├── training.py          # YOLO Fine-tuning Script
-│   ├── main.py              # CLI Detection Script
-│   └── archive/             # Dataset Management
+│   ├── scripts/             # CLI Detection & Training scripts
+│   ├── config/              # Dataset (YAML) & Class configurations
+│   ├── docs/                # Module documentation & Assets
+│   ├── results/             # Output videos & processed CSVs
+│   ├── archive/             # Dataset Management
+│   └── yolo-weights/        # Base YOLO models
 ├── requirements.txt         # Dependency Manifest
 └── README.md                # Documentation
 ```
@@ -122,3 +138,5 @@ If you find this project useful for your research or implementation, please give
 ## 📧 Contact
 
 For dataset access or professional inquiries, reach out on **[LinkedIn](https://www.linkedin.com/in/chirag-n-sundar/)**.
+
+<https://www.loom.com/share/67e87037e4884eab8ab88ee5439de8d4>
