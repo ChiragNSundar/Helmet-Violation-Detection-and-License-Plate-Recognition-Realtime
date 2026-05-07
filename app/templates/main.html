@@ -12,7 +12,7 @@
   <link href=" https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.3/animate.min.css" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" />
-  <link rel="stylesheet" href="styles/index.processed.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='styles/index.processed.css') }}">
 </head>
 
 <body>
@@ -67,7 +67,7 @@
                 </div>
               </div>
             </li>
-            <li><a href="http://127.0.0.1:8000">Check Violations</a></li>
+            <li><a href="/violations">Check Violations</a></li>
           </ul>
 
         </div>
@@ -592,7 +592,7 @@
  <!-- For Aos Animation -->
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
  <!-- Initialize -->
-  <script src="scripts\index.js"></script>
+  <script src="{{ url_for('static', path='scripts/index.js') }}"></script>
 
 </body>
 
